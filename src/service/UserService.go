@@ -44,3 +44,14 @@ func IsUserPasswordLegal(userName string, password string) (err error) {
 	}
 	return nil
 }
+
+func IsPasswordRight(username string, password string) (uid uint, err error) {
+	var user = &entity.User{}
+	dao.SqlSession.Model(&entity.User{}).Where("name=?", username).First(&user)
+	if user.Password == password {
+		return user.ID, nil
+	} else {
+		return 0, common.PasswordWrong
+	}
+
+}
