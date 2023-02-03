@@ -12,9 +12,13 @@ func UserRegister(username string, password string) (uid uint, err error) {
 	if IsUserNameUnique(username) {
 		return 0, common.UserNameNotUnique
 	}
+	encrypypwd, err := common.PasswordHash(password)
+	if err != nil {
+		return 0, common.PasswordEncryptWrong
+	}
 	newUser := entity.User{
 		Name:     username,
-		Password: password,
+		Password: encrypypwd,
 	}
 	dao.SqlSession.Model(&entity.User{}).Create(&newUser)
 	return newUser.ID, nil
@@ -48,7 +52,7 @@ func IsUserPasswordLegal(userName string, password string) (err error) {
 func IsPasswordRight(username string, password string) (uid uint, err error) {
 	var user = &entity.User{}
 	dao.SqlSession.Model(&entity.User{}).Where("name=?", username).First(&user)
-	if user.Password == password {
+	if common.PasswordVerify(password, user.Password) {
 		return user.ID, nil
 	} else {
 		return 0, common.PasswordWrong
