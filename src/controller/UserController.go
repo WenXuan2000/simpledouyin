@@ -6,6 +6,7 @@ import (
 	"simpledouyin/src/common"
 	"simpledouyin/src/middleware"
 	"simpledouyin/src/service"
+	"strconv"
 )
 
 type UidTokenResponse struct {
@@ -59,6 +60,7 @@ func Register(c *gin.Context) {
 	return
 }
 
+// 用户登录
 func Login(c *gin.Context) {
 	username := c.Query("username")
 	password := c.Query("password")
@@ -102,4 +104,71 @@ func Login(c *gin.Context) {
 		Token: token,
 	})
 	return
+}
+
+type UserInfoResponse struct {
+	common.Response
+	User UserQueryResponse `json:"user"` // 用户信息
+}
+
+// User
+type UserQueryResponse struct {
+	ID            uint   `json:"id"`             // 用户id
+	FollowCount   int    `json:"follow_count"`   // 关注总数
+	FollowerCount int    `json:"follower_count"` // 粉丝总数
+	Name          string `json:"name"`           // 用户名称
+	IsFollow      bool   `json:"is_follow"`      // true-已关注，false-未关注
+}
+
+// 用户信息
+func UserInfo(c *gin.Context) {
+	// 获取请求的uid
+	uqid := c.Query("user_id")
+	// 请求的用户信息存不存在
+	if !service.IsUserLiveById(uqid) {
+		c.JSON(http.StatusOK, UserInfoResponse{
+			Response: common.Response{
+				StatusCode: 1,
+				StatusMsg:  common.UserLiveWrong.Error(),
+			},
+		})
+		return
+	}
+	// 获得请求的用户信息
+	//var userq = entity.User{}
+	temp, err := strconv.ParseUint(uqid, 10, 64)
+	if err != nil {
+		c.JSON(http.StatusOK, UserInfoResponse{
+			Response: common.Response{
+				StatusCode: 1,
+				StatusMsg:  "类型转换错误string->uint",
+			},
+		})
+		return
+	}
+	// 获取查询用户uid
+	uqiduint := uint(temp)
+	userinfo, err := service.GetUserInfoById(uqiduint)
+	// 获取自己的token
+	clientoken := c.Query("token")
+	// 获取自己的uid
+	uid := service.GetUserIdByToken(clientoken)
+	// 计算uid是否关注uqiduint
+	isfollow := service.IsFollowed(uqiduint, uid)
+
+	c.JSON(http.StatusOK, UserInfoResponse{
+		Response: common.Response{
+			StatusCode: 0,
+			StatusMsg:  "请求用户信息成功",
+		},
+		User: UserQueryResponse{
+			ID:            userinfo.ID,
+			FollowCount:   userinfo.FollowCount,
+			FollowerCount: userinfo.FollowerCount,
+			Name:          userinfo.Name,
+			IsFollow:      isfollow,
+		},
+	})
+	return
+
 }

@@ -5,6 +5,7 @@ import (
 	"simpledouyin/src/common"
 	"simpledouyin/src/dao"
 	"simpledouyin/src/entity"
+	"simpledouyin/src/middleware"
 )
 
 // 新建user
@@ -57,5 +58,23 @@ func IsPasswordRight(username string, password string) (uid uint, err error) {
 	} else {
 		return 0, common.PasswordWrong
 	}
+}
 
+func IsUserLiveById(uid string) (ok bool) {
+	var userExist = &entity.User{}
+	if err := dao.SqlSession.Model(&entity.User{}).Where("id=?", uid).First(&userExist).Error; gorm.IsRecordNotFoundError(err) {
+		return false
+	}
+	return true
+}
+
+func GetUserInfoById(uid uint) (user entity.User, err error) {
+
+	dao.SqlSession.Model(&entity.User{}).Where("id=?", uid).First(&user)
+	return user, nil
+}
+
+func GetUserIdByToken(token string) (uid uint) {
+	_, tokenStruck, _ := middleware.ParseToken(token)
+	return tokenStruck.Uid
 }

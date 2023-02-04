@@ -3,6 +3,7 @@ package main
 import (
 	"github.com/gin-gonic/gin"
 	"simpledouyin/src/dao"
+	"simpledouyin/src/entity"
 )
 
 func main() {
@@ -14,6 +15,7 @@ func main() {
 	defer dao.Close()
 	//绑定模型
 	//dao.SqlSession.AutoMigrate(&entity.User{})
+	dao.SqlSession.AutoMigrate(&entity.Follow{})
 	//注册路由
 
 	r := gin.Default()

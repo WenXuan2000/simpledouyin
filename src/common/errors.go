@@ -11,4 +11,5 @@ var (
 	PasswordWrong        = errors.New("密码错误")
 	UserNoexist          = errors.New("该用户不存在")
 	PasswordEncryptWrong = errors.New("密码加密错误")
+	UserLiveWrong        = errors.New("请求的用户信息不存在")
 )
