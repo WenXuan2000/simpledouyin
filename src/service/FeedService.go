@@ -6,12 +6,11 @@ import (
 	ffmpeg "github.com/u2takey/ffmpeg-go"
 	"io"
 	"os"
+	"simpledouyin/src/common"
 	"simpledouyin/src/dao"
 	"simpledouyin/src/entity"
 	"time"
 )
-
-const videoNum = 2
 
 func FeedGet(lastTime int64) ([]entity.Video, error) {
 	if lastTime == 0 {
@@ -21,7 +20,7 @@ func FeedGet(lastTime int64) ([]entity.Video, error) {
 	fmt.Println("查询的时间", strTime)
 	var VideoList []entity.Video
 	VideoList = make([]entity.Video, 0)
-	err := dao.SqlSession.Table("videos").Where("created_at < ?", strTime).Order("created_at desc").Limit(videoNum).Find(&VideoList).Error
+	err := dao.SqlSession.Table("videos").Where("created_at < ?", strTime).Order("created_at desc").Limit(common.VideoFeedNum).Find(&VideoList).Error
 	return VideoList, err
 }
 
@@ -42,4 +41,10 @@ func ExampleReadFrameAsJpeg(inFileName string, frameNum int) io.Reader {
 // CreateVideo 添加一条视频信息
 func CreateVideo(video *entity.Video) {
 	dao.SqlSession.Table("videos").Create(&video)
+}
+
+// 通过作者id 获取所有发布的视频信息
+func GetPublicListByAuthorId(uid uint) (videos []entity.Video, err error) {
+	err = dao.SqlSession.Model(&entity.Video{}).Where("author_id=?", uid).Order("created_at desc").Find(&videos).Error
+	return
 }

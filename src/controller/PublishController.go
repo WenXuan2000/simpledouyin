@@ -11,6 +11,7 @@ import (
 	"simpledouyin/src/common"
 	"simpledouyin/src/entity"
 	"simpledouyin/src/service"
+	"strconv"
 	"strings"
 )
 
@@ -71,5 +72,70 @@ func Publish(c *gin.Context) {
 		Title:         title,
 	}
 	service.CreateVideo(&video)
+}
 
+// PublishListResponse
+type PublishListResponse struct {
+	common.Response
+	VideoList []Video `json:"video_list"` // 视频列表
+}
+
+// 用户的视频发布列表，直接列出用户所有投稿过的视频
+func PublishList(c *gin.Context) {
+	// 中间件已经对token进行了合法性的检验，这里直接去拿userid
+	temp, err := strconv.ParseUint(c.Query("user_id"), 10, 64)
+	if err != nil {
+		c.JSON(http.StatusOK, PublishListResponse{
+			Response: common.Response{
+				StatusCode: 1,
+				StatusMsg:  "类型转换错误string->uint",
+			},
+		})
+		return
+	}
+	// 获取查询用户uid
+	uid := uint(temp)
+
+	user, err := service.GetUserInfoById(uid)
+	auther := User{
+		ID:            user.ID,
+		FollowerCount: user.FollowerCount,
+		FollowCount:   user.FollowCount,
+		Name:          user.Name,
+		IsFollow:      false,
+	}
+	videolist, err := service.GetPublicListByAuthorId(uid)
+	if err != nil {
+		c.JSON(http.StatusOK, PublishListResponse{
+			Response: common.Response{
+				StatusCode: 1,
+				StatusMsg:  common.VideoGetWrong.Error(),
+			},
+		})
+		return
+	}
+	publishvideolist := make([]Video, 0)
+	var isfavorite bool
+	for _, video := range videolist {
+		isfavorite = false
+		videotemp := Video{
+			ID:            video.ID,
+			Author:        auther,
+			PlayURL:       video.PlayURL,
+			CoverURL:      video.CoverURL,
+			FavoriteCount: video.FavoriteCount,
+			CommentCount:  video.CommentCount,
+			IsFavorite:    isfavorite,
+			Title:         video.Title,
+		}
+		publishvideolist = append(publishvideolist, videotemp)
+	}
+	c.JSON(http.StatusOK, PublishListResponse{
+		Response: common.Response{
+			StatusCode: 0,
+			StatusMsg:  "成功显示用户发布所有视频",
+		},
+		VideoList: publishvideolist,
+	})
+	return
 }
