@@ -41,7 +41,7 @@ func Publish(c *gin.Context) {
 	finalName := fmt.Sprintf("%d_%s", userId, fileName)
 	playurl := "http://10.0.2.2:8080/static/" + finalName
 	//存储到本地文件夹
-	saveFile := filepath.Join("D:/simpledouyin/public/", finalName)
+	saveFile := filepath.Join("./public/", finalName)
 	if err := c.SaveUploadedFile(data, saveFile); err != nil {
 		c.JSON(http.StatusOK, common.Response{
 			StatusCode: 1,
@@ -53,7 +53,7 @@ func Publish(c *gin.Context) {
 	// 封面路径
 	coverName := strings.Replace(finalName, ".mp4", ".jpeg", 1)
 	coverurl := "http://10.0.2.2:8080/static/" + coverName
-	saveImage := filepath.Join("D:/simpledouyin/public/", coverName)
+	saveImage := filepath.Join("./public/", coverName)
 
 	buf := service.ExampleReadFrameAsJpeg(saveFile, 3) //获取第3帧封面
 	img, _ := jpeg.Decode(buf)                         //保存到本地时要用到
