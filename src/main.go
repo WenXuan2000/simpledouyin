@@ -14,8 +14,9 @@ func main() {
 	//程序退出关闭数据库连接
 	defer dao.Close()
 	//绑定模型
-	//dao.SqlSession.AutoMigrate(&entity.User{})
+	dao.SqlSession.AutoMigrate(&entity.User{})
 	dao.SqlSession.AutoMigrate(&entity.Follow{})
+	dao.SqlSession.AutoMigrate(&entity.Video{})
 	//注册路由
 
 	r := gin.Default()
