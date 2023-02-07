@@ -9,6 +9,6 @@ func (Follow) TableName() string {
 // Follow关注逻辑： FollowId->FollowedId
 type Follow struct {
 	gorm.Model
-	FollowedId int `json:"followed_id"`
-	FollowId   int `json:"follow_id"`
+	FollowedId uint `json:"followed_id"`
+	FollowId   uint `json:"follow_id"`
 }

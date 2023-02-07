@@ -13,4 +13,5 @@ var (
 	PasswordEncryptWrong = errors.New("密码加密错误")
 	UserLiveWrong        = errors.New("请求的用户信息不存在")
 	VideoGetWrong        = errors.New("视频列表获取失败")
+	ActionTypeWrong      = errors.New("用户动作违规")
 )
