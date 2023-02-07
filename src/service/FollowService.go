@@ -34,6 +34,10 @@ func FollowAction(uid uint, touid uint, action_type string) (err error) {
 }
 
 func DoFollow(uid uint, touid uint) (err error) {
+	// 查看数据库中有没有已经关注的记录
+	if IsFollowed(touid, uid) {
+		return common.FollowActionDuplicate
+	}
 	follow := &entity.Follow{
 		FollowedId: touid,
 		FollowId:   uid,
