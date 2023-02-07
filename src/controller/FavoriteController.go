@@ -31,6 +31,13 @@ func FavoriteAction(c *gin.Context) {
 	// 调用处理函数
 	// uint64 -> uint
 	err = service.FavoriteAction(userId, uint(videoId), actionType)
+	var msg string
+	switch actionType {
+	case "1":
+		msg = "成功完成点赞操作"
+	case "2":
+		msg = "成功完成取消点赞操作"
+	}
 	if err != nil {
 		c.JSON(http.StatusBadRequest, common.Response{
 			StatusCode: 1,
@@ -40,7 +47,7 @@ func FavoriteAction(c *gin.Context) {
 	} else {
 		c.JSON(http.StatusOK, common.Response{
 			StatusCode: 0,
-			StatusMsg:  "操作成功",
+			StatusMsg:  msg,
 		})
 		return
 	}
