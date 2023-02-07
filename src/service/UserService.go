@@ -78,3 +78,16 @@ func GetUserIdByToken(token string) (uid uint) {
 	_, tokenStruck, _ := middleware.ParseToken(token)
 	return tokenStruck.Uid
 }
+
+func UpdateUserFollowCount(uid uint, i string) (err error) {
+	if err = dao.SqlSession.Model(&entity.User{}).Where("id=?", uid).Update("follow_count", gorm.Expr("follow_count +"+i)).Error; err != nil {
+		return err
+	}
+	return nil
+}
+func UpdateUserFollowerCount(uid uint, i string) (err error) {
+	if err = dao.SqlSession.Model(&entity.User{}).Where("id=?", uid).Update("follower_count", gorm.Expr("follower_count +"+i)).Error; err != nil {
+		return err
+	}
+	return nil
+}

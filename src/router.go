@@ -28,7 +28,7 @@ func initRouter(r *gin.Engine) {
 
 	// extra apis - II
 	apiRouter.POST("/relation/action/", middleware.JwtHandler(), controller.RelationAction)
-	//apiRouter.GET("/relation/follow/list/", middleware.JwtHandler(), controller.FollowList)
+	apiRouter.GET("/relation/follow/list/", middleware.JwtHandler(), controller.FollowList)
 	//apiRouter.GET("/relation/follower/list/", middleware.JwtHandler(), controller.FollowerList)
 	//apiRouter.GET("/relation/friend/list/", middleware.JwtHandler(), controller.FriendList)
 	//apiRouter.GET("/message/chat/", middleware.JwtHandler(), controller.MessageChat)

@@ -49,6 +49,14 @@ func ParseToken(tokenStr string) (*gojwt.Token, *Claims, error) {
 	return token, claims, err
 }
 
+func ParseTokenGetID(tokenStr string) (Uid uint) {
+	claims := &Claims{}
+	_, _ = gojwt.ParseWithClaims(tokenStr, claims, func(t *gojwt.Token) (interface{}, error) {
+		return jwtKey, nil
+	})
+	return claims.Uid
+}
+
 func JwtHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		tokenStr := c.Query("token")

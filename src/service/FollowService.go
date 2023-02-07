@@ -43,10 +43,42 @@ func DoFollow(uid uint, touid uint) (err error) {
 		FollowId:   uid,
 	}
 	err = dao.SqlSession.Model(&entity.Follow{}).Create(&follow).Error
+	if err != nil {
+		return err
+	}
+	err = UpdateUserFollowCount(uid, "1")
+	if err != nil {
+		return err
+	}
+	err = UpdateUserFollowerCount(touid, "1")
 	return err
 }
 func UnFollow(uid uint, touid uint) (err error) {
+	//先查询有没有这条记录，防止重复删除
+	if err = dao.SqlSession.Model(&entity.Follow{}).Where("followed_id = ? AND follow_id = ?", touid, uid).First(&entity.Follow{}).Error; err != nil {
+		return err
+	}
 	// 这里删除不存在的记录也不会报错
 	err = dao.SqlSession.Model(&entity.Follow{}).Where("followed_id = ? AND follow_id = ?", touid, uid).Delete(&entity.Follow{}).Error
+	if err != nil {
+		return err
+	}
+	err = UpdateUserFollowCount(uid, "-1")
+	if err != nil {
+		return err
+	}
+	err = UpdateUserFollowerCount(touid, "-1")
 	return err
+}
+
+func FollowListGet(uid uint) ([]entity.User, error) {
+	var FollowList []entity.User
+	FollowList = make([]entity.User, 0)
+	if err := dao.SqlSession.Model(&entity.User{}).
+		Joins("left join "+entity.Follow{}.TableName()+" on "+entity.User{}.TableName()+".id = "+entity.Follow{}.TableName()+".followed_id").
+		Where(entity.Follow{}.TableName()+".follow_id=? AND "+entity.Follow{}.TableName()+".deleted_at is null", uid).
+		Scan(&FollowList).Error; err != nil {
+		return FollowList, err
+	}
+	return FollowList, nil
 }
