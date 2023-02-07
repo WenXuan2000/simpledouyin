@@ -85,17 +85,17 @@ func Feed(c *gin.Context) {
 		tmp.CoverURL = x.CoverURL
 		tmp.FavoriteCount = x.FavoriteCount
 		tmp.IsFavorite = false
-		//if haveToken {
-		//	//查询是否点赞过
-		//	_, tokenStruct, _ := middleware.ParseToken(strToken)
-		//	if time.Now().Unix() <= tokenStruct.ExpiresAt { //token合法
-		//		var uid = tokenStruct.Uid            //用户id
-		//		var vid = x.ID                       // 视频id
-		//		if service.CheckFavorite(uid, vid) { //有点赞记录
-		//			tmp.IsFavorite = true
-		//		}
-		//	}
-		//}
+		if haveToken {
+			//查询是否点赞过
+			_, tokenStruct, _ := middleware.ParseToken(strToken)
+			if time.Now().Unix() <= tokenStruct.ExpiresAt { //token合法
+				var uid = tokenStruct.Uid            //用户id
+				var vid = x.ID                       // 视频id
+				if service.CheckFavorite(uid, vid) { //有点赞记录
+					tmp.IsFavorite = true
+				}
+			}
+		}
 		tmp.Title = x.Title
 		VideoList = append(VideoList, tmp)
 		newTime = x.CreatedAt.Unix()

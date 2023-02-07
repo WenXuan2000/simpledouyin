@@ -48,3 +48,12 @@ func GetPublicListByAuthorId(uid uint) (videos []entity.Video, err error) {
 	err = dao.SqlSession.Model(&entity.Video{}).Where("author_id=?", uid).Order("created_at desc").Find(&videos).Error
 	return
 }
+
+// GetVideoAuthor get video author
+func GetVideoAuthor(videoId uint) (uint, error) {
+	var video entity.Video
+	if err := dao.SqlSession.Model(&entity.Video{}).Where("id = ?", videoId).Find(&video).Error; err != nil {
+		return video.ID, err
+	}
+	return video.AuthorId, nil
+}

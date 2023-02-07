@@ -5,15 +5,15 @@ import (
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/mysql"
 	"gopkg.in/yaml.v2"
-	"io/ioutil"
+	"os"
 )
 
-//指定驱动
+// 指定驱动
 const DRIVER = "mysql"
 
 var SqlSession *gorm.DB
 
-//配置参数映射结构体
+// 配置参数映射结构体
 type conf struct {
 	Url      string `yaml:"url"`
 	UserName string `yaml:"userName"`
@@ -22,10 +22,10 @@ type conf struct {
 	Port     string `yaml:"post"`
 }
 
-//获取配置参数数据
+// 获取配置参数数据
 func (c *conf) getConf() *conf {
 	//读取resources/application.yaml文件
-	yamlFile, err := ioutil.ReadFile("resources/application.yaml")
+	yamlFile, err := os.ReadFile("resources/application.yaml")
 	//若出现错误，打印错误提示
 	if err != nil {
 		fmt.Println(err.Error())
@@ -38,7 +38,7 @@ func (c *conf) getConf() *conf {
 	return c
 }
 
-//初始化连接数据库，生成可操作基本增删改查结构的变量
+// 初始化连接数据库，生成可操作基本增删改查结构的变量
 func InitMySql() (err error) {
 	var c conf
 	//获取yaml配置参数
@@ -60,7 +60,7 @@ func InitMySql() (err error) {
 	return SqlSession.DB().Ping()
 }
 
-//关闭数据库连接
+// 关闭数据库连接
 func Close() {
 	SqlSession.Close()
 }
