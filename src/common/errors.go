@@ -7,6 +7,7 @@ var (
 	UserNametoolong       = errors.New("用户名过长")
 	PasswordNull          = errors.New("密码为空")
 	Passwordtoolong       = errors.New("密码过长")
+	Passwordtooshot       = errors.New("密码过短")
 	UserNameNotUnique     = errors.New("用户名重复")
 	PasswordWrong         = errors.New("密码错误")
 	UserNoexist           = errors.New("该用户不存在")

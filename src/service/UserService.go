@@ -47,6 +47,9 @@ func IsUserPasswordLegal(userName string, password string) (err error) {
 	if len(password) > common.MaxPasswordLength {
 		return common.Passwordtoolong
 	}
+	if len(password) < common.MinPasswordLength {
+		return common.Passwordtooshot
+	}
 	return nil
 }
 

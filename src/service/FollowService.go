@@ -84,3 +84,26 @@ func FollowListGet(uid uint) ([]entity.User, error) {
 	}
 	return FollowList, nil
 }
+func FollowerListGet(uid uint) ([]entity.User, error) {
+	var FollowerList []entity.User
+	FollowerList = make([]entity.User, 0)
+	if err := dao.SqlSession.Model(&entity.User{}).
+		Joins("left join "+entity.Follow{}.TableName()+" on "+entity.User{}.TableName()+".id = "+entity.Follow{}.TableName()+".follow_id").
+		Where(entity.Follow{}.TableName()+".followed_id=? AND "+entity.Follow{}.TableName()+".deleted_at is null", uid).
+		Scan(&FollowerList).Error; err != nil {
+		return FollowerList, err
+	}
+	return FollowerList, nil
+}
+
+func FriendListGet(uid uint) ([]entity.User, error) {
+	var FollowerList []entity.User
+	FollowerList = make([]entity.User, 0)
+	if err := dao.SqlSession.Model(&entity.User{}).
+		Joins("left join "+entity.Follow{}.TableName()+" on "+entity.User{}.TableName()+".id = "+entity.Follow{}.TableName()+".follow_id").
+		Where(entity.Follow{}.TableName()+".followed_id=? AND "+entity.Follow{}.TableName()+".deleted_at is null", uid).
+		Scan(&FollowerList).Error; err != nil {
+		return FollowerList, err
+	}
+	return FollowerList, nil
+}

@@ -104,3 +104,103 @@ func FollowList(c *gin.Context) {
 	})
 	return
 }
+
+func FollowerList(c *gin.Context) {
+	quid, err := strconv.ParseUint(c.Query("user_id"), 10, 64)
+	if err != nil {
+		c.JSON(http.StatusOK, UserInfoResponse{
+			Response: common.Response{
+				StatusCode: 1,
+				StatusMsg:  "类型转换错误string->uint",
+			},
+		})
+		return
+	}
+	queryuid := uint(quid)
+	strToken := c.Query("token")
+	hostid := middleware.ParseTokenGetID(strToken)
+	followerlist := make([]FollowUser, 0)
+	getfollowerlist, err2 := service.FollowerListGet(queryuid)
+	if err2 != nil {
+		c.JSON(http.StatusOK, FollowUserListResponse{
+			Response: common.Response{
+				StatusCode: 1,
+				StatusMsg:  "获取粉丝列表失败",
+			},
+		})
+		return
+	}
+	for _, user := range getfollowerlist {
+		followusertemp := FollowUser{
+			FollowCount:   user.FollowCount,
+			FollowerCount: user.FollowerCount,
+			ID:            user.ID,
+			Name:          user.Name,
+			IsFollow:      service.IsFollowed(user.ID, hostid),
+		}
+		followerlist = append(followerlist, followusertemp)
+	}
+	c.JSON(http.StatusOK, FollowUserListResponse{
+		Response: common.Response{
+			StatusCode: 0,
+			StatusMsg:  "成功获取粉丝列表",
+		},
+		FollowUserList: followerlist,
+	})
+	return
+}
+
+func FriendList(c *gin.Context) {
+	quid, err := strconv.ParseUint(c.Query("user_id"), 10, 64)
+	if err != nil {
+		c.JSON(http.StatusOK, UserInfoResponse{
+			Response: common.Response{
+				StatusCode: 1,
+				StatusMsg:  "类型转换错误string->uint",
+			},
+		})
+		return
+	}
+	queryuid := uint(quid)
+	strToken := c.Query("token")
+	hostid := middleware.ParseTokenGetID(strToken)
+	//好友列表只能自己请求
+	if hostid != queryuid {
+		c.JSON(http.StatusOK, FollowUserListResponse{
+			Response: common.Response{
+				StatusCode: 1,
+				StatusMsg:  "超出权限请求好友列表",
+			},
+		})
+		return
+	}
+	friendlist := make([]FollowUser, 0)
+	getfriendlist, err2 := service.FriendListGet(queryuid)
+	if err2 != nil {
+		c.JSON(http.StatusOK, FollowUserListResponse{
+			Response: common.Response{
+				StatusCode: 1,
+				StatusMsg:  "获取好友列表失败",
+			},
+		})
+		return
+	}
+	for _, user := range getfriendlist {
+		followusertemp := FollowUser{
+			FollowCount:   user.FollowCount,
+			FollowerCount: user.FollowerCount,
+			ID:            user.ID,
+			Name:          user.Name,
+			IsFollow:      service.IsFollowed(user.ID, hostid),
+		}
+		friendlist = append(friendlist, followusertemp)
+	}
+	c.JSON(http.StatusOK, FollowUserListResponse{
+		Response: common.Response{
+			StatusCode: 0,
+			StatusMsg:  "成功获取好友列表",
+		},
+		FollowUserList: friendlist,
+	})
+	return
+}
