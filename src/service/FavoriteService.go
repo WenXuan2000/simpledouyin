@@ -22,11 +22,15 @@ func FavoriteAction(userid uint, videoid uint, actiontype string) (err error) {
 }
 
 func DoFavorite(userid, videoid uint) (err error) {
+	// 查询是否存在已有数据
+	if CheckFavorite(userid, videoid) {
+		return common.FavoriteExist
+	}
+	// favorite表 创建
 	favoriteInfo := entity.Favorite{
 		UserId:  userid,
 		VideoId: videoid,
 	}
-	// favorite表 创建
 	if err = dao.SqlSession.Model(&entity.Favorite{}).Create(&favoriteInfo).Error; err != nil {
 		return err
 	}
@@ -61,6 +65,10 @@ func DoFavorite(userid, videoid uint) (err error) {
 }
 
 func UnFavorite(userid, videoid uint) (err error) {
+	// 查询是否存在已有数据
+	if !CheckFavorite(userid, videoid) {
+		return common.FavoriteNoExist
+	}
 	// 删除
 	if err = dao.SqlSession.Model(&entity.Favorite{}).
 		Where("user_id = ? AND video_id = ?", userid, videoid).
@@ -103,4 +111,15 @@ func CheckFavorite(userid, videoid uint) bool {
 		return false
 	}
 	return true
+}
+
+func FavoriteListGet(uid uint) ([]entity.Video, error) {
+	FavoriteList := make([]entity.Video, 0)
+	if err := dao.SqlSession.Model(&entity.Video{}).
+		Joins("left join "+entity.Favorite{}.TableName()+" on "+entity.Video{}.TableName()+".id = "+entity.Favorite{}.TableName()+".video_id").
+		Where(entity.Favorite{}.TableName()+".user_id=? AND "+entity.Favorite{}.TableName()+".deleted_at is null", uid).
+		Scan(&FavoriteList).Error; err != nil {
+		return FavoriteList, err
+	}
+	return FavoriteList, nil
 }

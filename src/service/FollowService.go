@@ -7,6 +7,8 @@ import (
 	"simpledouyin/src/entity"
 )
 
+// uqid：被关注的人
+// uid： 自己
 func IsFollowed(uqid uint, uid uint) (ok bool) {
 	// 自己不能follow自己
 	if uqid == uid {

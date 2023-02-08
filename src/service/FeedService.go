@@ -38,11 +38,6 @@ func ExampleReadFrameAsJpeg(inFileName string, frameNum int) io.Reader {
 	return buf
 }
 
-// CreateVideo 添加一条视频信息
-func CreateVideo(video *entity.Video) {
-	dao.SqlSession.Table("videos").Create(&video)
-}
-
 // 通过作者id 获取所有发布的视频信息
 func GetPublicListByAuthorId(uid uint) (videos []entity.Video, err error) {
 	err = dao.SqlSession.Model(&entity.Video{}).Where("author_id=?", uid).Order("created_at desc").Find(&videos).Error

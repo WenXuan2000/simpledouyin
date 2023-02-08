@@ -15,4 +15,6 @@ var (
 	VideoGetWrong         = errors.New("视频列表获取失败")
 	ActionTypeWrong       = errors.New("用户动作违规")
 	FollowActionDuplicate = errors.New("用户操作重复")
+	FavoriteExist         = errors.New("点赞操作重复")
+	FavoriteNoExist       = errors.New("点赞关系不存在")
 )

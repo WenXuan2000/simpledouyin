@@ -8,8 +8,65 @@ import (
 	"strconv"
 )
 
-func FavoriteList(c *gin.Context) {
+type FavoriteResponse struct {
+	common.Response
+	VideoList []Video `json:"video_list"` // 视频列表
+}
 
+func FavoriteList(c *gin.Context) {
+	token := c.Query("token")
+	hostid := service.GetUserIdByToken(token)
+	getuserid, _ := strconv.ParseUint(c.Query("user_id"), 10, 10)
+	userid := uint(getuserid)
+	getFavoriteList, err := service.FavoriteListGet(userid)
+	if err != nil {
+		c.JSON(http.StatusNoContent, FavoriteResponse{
+			Response: common.Response{
+				StatusCode: 1,
+				StatusMsg:  "获取点赞列表失败" + err.Error(),
+			},
+		})
+		return
+	}
+	if len(getFavoriteList) == 0 {
+		c.JSON(http.StatusNoContent, FavoriteResponse{
+			Response: common.Response{
+				StatusCode: 1,
+				StatusMsg:  "喜欢列表为空",
+			},
+			VideoList: nil,
+		})
+		return
+	}
+	var favoriteList []Video
+	for _, v := range getFavoriteList {
+		favoriteUserTemp, _ := service.GetUserInfoById(v.AuthorId)
+		favoriteVideoTemp := Video{
+			ID: v.ID,
+			Author: User{
+				ID:            favoriteUserTemp.ID,
+				Name:          favoriteUserTemp.Name,
+				FollowCount:   favoriteUserTemp.FollowCount,
+				FollowerCount: favoriteUserTemp.FollowerCount,
+				IsFollow:      service.IsFollowed(favoriteUserTemp.ID, hostid),
+			},
+			PlayURL:       v.PlayURL,
+			CoverURL:      v.CoverURL,
+			FavoriteCount: v.FavoriteCount,
+			CommentCount:  v.CommentCount,
+			IsFavorite:    service.CheckFavorite(hostid, v.ID),
+			Title:         v.Title,
+		}
+		favoriteList = append(favoriteList, favoriteVideoTemp)
+	}
+	c.JSON(http.StatusOK, FavoriteResponse{
+		Response: common.Response{
+			StatusCode: 0,
+			StatusMsg:  "获取点赞列表成功",
+		},
+		VideoList: favoriteList,
+	})
+	return
 }
 
 func FavoriteAction(c *gin.Context) {

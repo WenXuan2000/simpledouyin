@@ -13,19 +13,13 @@ import (
 	"simpledouyin/src/service"
 	"strconv"
 	"strings"
+	"time"
 )
-
-type PublishResponse struct {
-	common.Response
-}
 
 func Publish(c *gin.Context) {
 	//中间件验证token后，获取userId
-	getUserId, _ := c.Get("user_id")
-	var userId uint
-	if v, ok := getUserId.(uint); ok {
-		userId = v
-	}
+	token := c.PostForm("token")
+	userId := service.GetUserIdByToken(token)
 	//接收请求参数信息
 	title := c.PostForm("title")
 	data, err := c.FormFile("data")
@@ -39,7 +33,7 @@ func Publish(c *gin.Context) {
 
 	//设置文件名称
 	fileName := filepath.Base(data.Filename)
-	finalName := fmt.Sprintf("%d_%s", userId, fileName)
+	finalName := fmt.Sprintf("%d_%d_%s", userId, time.Now().Unix(), fileName)
 	playurl := "http://10.0.2.2:8080/static/" + finalName
 	//存储到本地文件夹
 	saveFile := filepath.Join("./public/", finalName)
@@ -72,6 +66,13 @@ func Publish(c *gin.Context) {
 		Title:         title,
 	}
 	service.CreateVideo(&video)
+
+	c.JSON(http.StatusOK, common.Response{
+		StatusCode: 0,
+		StatusMsg:  "视频投稿成功",
+	})
+	return
+
 }
 
 // PublishListResponse
@@ -82,29 +83,14 @@ type PublishListResponse struct {
 
 // 用户的视频发布列表，直接列出用户所有投稿过的视频
 func PublishList(c *gin.Context) {
-	// 中间件已经对token进行了合法性的检验，这里直接去拿userid
-	temp, err := strconv.ParseUint(c.Query("user_id"), 10, 64)
-	if err != nil {
-		c.JSON(http.StatusOK, PublishListResponse{
-			Response: common.Response{
-				StatusCode: 1,
-				StatusMsg:  "类型转换错误string->uint",
-			},
-		})
-		return
-	}
-	// 获取查询用户uid
-	uid := uint(temp)
-
-	user, err := service.GetUserInfoById(uid)
-	auther := User{
-		ID:            user.ID,
-		FollowerCount: user.FollowerCount,
-		FollowCount:   user.FollowCount,
-		Name:          user.Name,
-		IsFollow:      false,
-	}
-	videolist, err := service.GetPublicListByAuthorId(uid)
+	// 通过token获取hostid
+	token := c.Query("token")
+	hostid := service.GetUserIdByToken(token)
+	// userid
+	getuserid, _ := strconv.ParseUint(c.Query("user_id"), 10, 10)
+	userid := uint(getuserid)
+	// 得到视频
+	videolist, err := service.GetPublicListByAuthorId(userid)
 	if err != nil {
 		c.JSON(http.StatusOK, PublishListResponse{
 			Response: common.Response{
@@ -114,10 +100,30 @@ func PublishList(c *gin.Context) {
 		})
 		return
 	}
+	if len(videolist) == 0 {
+		c.JSON(http.StatusNoContent, PublishListResponse{
+			Response: common.Response{
+				StatusCode: 1,
+				StatusMsg:  "该用户发布列表为空",
+			},
+			VideoList: nil,
+		})
+		return
+	}
+	// 得到userid的userinfo
+	user, err := service.GetUserInfoById(userid)
+	auther := User{
+		ID:            user.ID,
+		FollowerCount: user.FollowerCount,
+		FollowCount:   user.FollowCount,
+		Name:          user.Name,
+		IsFollow:      false,
+	}
+	if userid != hostid {
+		auther.IsFollow = service.IsFollowed(userid, hostid)
+	}
 	publishvideolist := make([]Video, 0)
-	var isfavorite bool
 	for _, video := range videolist {
-		isfavorite = false
 		videotemp := Video{
 			ID:            video.ID,
 			Author:        auther,
@@ -125,7 +131,7 @@ func PublishList(c *gin.Context) {
 			CoverURL:      video.CoverURL,
 			FavoriteCount: video.FavoriteCount,
 			CommentCount:  video.CommentCount,
-			IsFavorite:    isfavorite,
+			IsFavorite:    service.CheckFavorite(hostid, video.ID),
 			Title:         video.Title,
 		}
 		publishvideolist = append(publishvideolist, videotemp)
