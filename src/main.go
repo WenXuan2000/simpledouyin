@@ -18,6 +18,7 @@ func main() {
 	dao.SqlSession.AutoMigrate(&entity.Follow{})
 	dao.SqlSession.AutoMigrate(&entity.Video{})
 	dao.SqlSession.AutoMigrate(&entity.Favorite{})
+	dao.SqlSession.AutoMigrate(&entity.Comment{})
 	//注册路由
 
 	r := gin.Default()
