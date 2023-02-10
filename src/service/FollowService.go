@@ -24,6 +24,9 @@ func IsFollowed(uqid uint, uid uint) (ok bool) {
 
 // 修改关注列表
 func FollowAction(uid uint, touid uint, action_type string) (err error) {
+	if uid == touid {
+		return common.FollowActionWrong
+	}
 	switch action_type {
 	case "1":
 		err = DoFollow(uid, touid)
