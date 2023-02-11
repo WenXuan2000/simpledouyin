@@ -13,7 +13,7 @@ func initRouter(r *gin.Engine) {
 	apiRouter := r.Group("/douyin")
 
 	// basic apis
-	apiRouter.GET("/feed/", controller.Feed)
+	apiRouter.GET("/feed/", middleware.JwtHandler(), controller.Feed)
 	apiRouter.GET("/user/", middleware.JwtHandler(), controller.UserInfo)
 	apiRouter.POST("/user/register/", controller.Register)
 	apiRouter.POST("/user/login/", controller.Login)
@@ -31,6 +31,6 @@ func initRouter(r *gin.Engine) {
 	apiRouter.GET("/relation/follow/list/", middleware.JwtHandler(), controller.FollowList)
 	apiRouter.GET("/relation/follower/list/", middleware.JwtHandler(), controller.FollowerList)
 	apiRouter.GET("/relation/friend/list/", middleware.JwtHandler(), controller.FriendList)
-	//apiRouter.GET("/message/chat/", middleware.JwtHandler(), controller.MessageChat)
-	//apiRouter.POST("/message/action/", middleware.JwtHandler(), controller.MessageAction)
+	apiRouter.GET("/message/chat/", middleware.JwtHandler(), controller.MessageChat)
+	apiRouter.POST("/message/action/", middleware.JwtHandler(), controller.MessageAction)
 }

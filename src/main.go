@@ -19,6 +19,7 @@ func main() {
 	dao.SqlSession.AutoMigrate(&entity.Video{})
 	dao.SqlSession.AutoMigrate(&entity.Favorite{})
 	dao.SqlSession.AutoMigrate(&entity.Comment{})
+	dao.SqlSession.AutoMigrate(&entity.Message{})
 	//注册路由
 
 	r := gin.Default()
@@ -26,4 +27,5 @@ func main() {
 
 	r.Run() // listen and serve on 0.0.0.0:8080 (for windows "localhost:8080")
 	//10.0.2.2是一个特殊IP，在模拟器上用10.0.2.2就是访问你的电脑本机
+	//	http://10.0.2.2:8080/
 }
