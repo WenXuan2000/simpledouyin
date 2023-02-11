@@ -38,7 +38,7 @@ func FollowAction(uid uint, touid uint, action_type string) (err error) {
 	return err
 }
 
-func DoFollow(uid uint, touid uint) (err error) {
+func DoFollow(uid uint, touid uint) error {
 	// 查看数据库中有没有已经关注的记录
 	if IsFollowed(touid, uid) {
 		return common.FollowActionDuplicate
@@ -47,33 +47,48 @@ func DoFollow(uid uint, touid uint) (err error) {
 		FollowedId: touid,
 		FollowId:   uid,
 	}
-	err = dao.SqlSession.Model(&entity.Follow{}).Create(&follow).Error
-	if err != nil {
+	// 事务操作
+	err1 := dao.SqlSession.Transaction(func(db *gorm.DB) error {
+		err := db.Model(&entity.Follow{}).Create(&follow).Error
+		if err != nil {
+			return err
+		}
+		err = UpdateUserFollowCount(uid, "1", db)
+		if err != nil {
+			return err
+		}
+		err = UpdateUserFollowerCount(touid, "1", db)
 		return err
+	})
+	if err1 != nil {
+		return err1
 	}
-	err = UpdateUserFollowCount(uid, "1")
-	if err != nil {
-		return err
-	}
-	err = UpdateUserFollowerCount(touid, "1")
-	return err
+	return nil
 }
-func UnFollow(uid uint, touid uint) (err error) {
+func UnFollow(uid uint, touid uint) error {
 	//先查询有没有这条记录，防止重复删除
-	if err = dao.SqlSession.Model(&entity.Follow{}).Where("followed_id = ? AND follow_id = ?", touid, uid).First(&entity.Follow{}).Error; err != nil {
+	if err := dao.SqlSession.Model(&entity.Follow{}).Where("followed_id = ? AND follow_id = ?", touid, uid).First(&entity.Follow{}).Error; err != nil {
 		return err
 	}
-	// 这里删除不存在的记录也不会报错
-	err = dao.SqlSession.Model(&entity.Follow{}).Where("followed_id = ? AND follow_id = ?", touid, uid).Delete(&entity.Follow{}).Error
-	if err != nil {
+	// 事务操作
+	err1 := dao.SqlSession.Transaction(func(db *gorm.DB) error {
+		// 这里删除不存在的记录也不会报错
+		err := db.Model(&entity.Follow{}).Where("followed_id = ? AND follow_id = ?", touid, uid).Delete(&entity.Follow{}).Error
+		if err != nil {
+			return err
+		}
+		err = UpdateUserFollowCount(uid, "-1", db)
+		if err != nil {
+			return err
+		}
+		err = UpdateUserFollowerCount(touid, "-1", db)
 		return err
+	})
+	if err1 != nil {
+		return err1
 	}
-	err = UpdateUserFollowCount(uid, "-1")
-	if err != nil {
-		return err
-	}
-	err = UpdateUserFollowerCount(touid, "-1")
-	return err
+	return nil
+
 }
 
 func FollowListGet(uid uint) ([]entity.User, error) {

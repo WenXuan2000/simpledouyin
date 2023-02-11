@@ -82,14 +82,14 @@ func GetUserIdByToken(token string) (uid uint) {
 	return tokenStruck.Uid
 }
 
-func UpdateUserFollowCount(uid uint, i string) (err error) {
-	if err = dao.SqlSession.Model(&entity.User{}).Where("id=?", uid).Update("follow_count", gorm.Expr("follow_count +"+i)).Error; err != nil {
+func UpdateUserFollowCount(uid uint, i string, db *gorm.DB) (err error) {
+	if err = db.Model(&entity.User{}).Where("id=?", uid).Update("follow_count", gorm.Expr("follow_count +"+i)).Error; err != nil {
 		return err
 	}
 	return nil
 }
-func UpdateUserFollowerCount(uid uint, i string) (err error) {
-	if err = dao.SqlSession.Model(&entity.User{}).Where("id=?", uid).Update("follower_count", gorm.Expr("follower_count +"+i)).Error; err != nil {
+func UpdateUserFollowerCount(uid uint, i string, db *gorm.DB) (err error) {
+	if err = db.Model(&entity.User{}).Where("id=?", uid).Update("follower_count", gorm.Expr("follower_count +"+i)).Error; err != nil {
 		return err
 	}
 	return nil
