@@ -11,5 +11,16 @@ type Message struct {
 	ToUserID   uint   `json:"to_user_id"`
 	UserID     uint   `json:"user_id"`
 	Content    string `json:"content"`
-	CreateTime string `json:"createTime"`
+	CreateTime int64  `json:"create_time"`
+}
+
+func (MessageHistory) TableName() string {
+	return "MessageHistorys"
+}
+
+type MessageHistory struct {
+	gorm.Model
+	ToUserID uint  `json:"to_user_id"`
+	UserID   uint  `json:"user_id"`
+	LastTime int64 `json:"Last_Time"`
 }

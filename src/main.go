@@ -20,6 +20,7 @@ func main() {
 	dao.SqlSession.AutoMigrate(&entity.Favorite{})
 	dao.SqlSession.AutoMigrate(&entity.Comment{})
 	dao.SqlSession.AutoMigrate(&entity.Message{})
+	dao.SqlSession.AutoMigrate(&entity.MessageHistory{})
 	//注册路由
 
 	r := gin.Default()

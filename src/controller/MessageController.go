@@ -15,7 +15,7 @@ type ChatMessage struct {
 	FromUserId uint   `json:"from_user_id"`
 	ToUserId   uint   `json:"to_user_id"`
 	Content    string `json:"content,omitempty"`
-	CreateTime string `json:"create_time,omitempty"`
+	CreateTime int64  `json:"create_time,omitempty"`
 }
 type DouYinChatMessageResponse struct {
 	common.Response
@@ -46,6 +46,19 @@ func MessageChat(c *gin.Context) {
 			CreateTime: message.CreateTime,
 		})
 	}
+	if len(ChatMessages) > 0 {
+		temp := ChatMessages[0]
+		err = service.UpdateLastCheatTime(uid, uint(to_user_id), temp.CreateTime)
+	}
+
+	if err != nil {
+		c.JSON(http.StatusOK, DouYinChatMessageResponse{
+			Response: common.Response{
+				StatusCode: 1,
+				StatusMsg:  "更新最后一次通话时间错误",
+			},
+		})
+	}
 	c.JSON(http.StatusOK, DouYinChatMessageResponse{
 		Response: common.Response{
 			StatusCode: 0,
@@ -53,6 +66,7 @@ func MessageChat(c *gin.Context) {
 		},
 		ChatMessages: ChatMessages,
 	})
+
 	return
 }
 
@@ -61,7 +75,7 @@ func MessageAction(c *gin.Context) {
 	to_user_id, _ := strconv.Atoi(c.Query("to_user_id"))
 	action_type := c.Query("action_type")
 	content := c.Query("content")
-	createtime := time.Now().Format(time.Kitchen)
+	createtime := time.Now().Unix()
 	uid := middleware.ParseTokenGetID(token)
 
 	switch action_type {
@@ -79,6 +93,14 @@ func MessageAction(c *gin.Context) {
 		c.JSON(http.StatusOK, common.Response{
 			StatusCode: 0,
 			StatusMsg:  "没有定义的操作",
+		})
+		return
+	}
+	err := service.UpdateLastCheatTime(uid, uint(to_user_id), createtime)
+	if err != nil {
+		c.JSON(http.StatusOK, common.Response{
+			StatusCode: 1,
+			StatusMsg:  "更新最后一次通话时间错误",
 		})
 		return
 	}
