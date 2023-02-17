@@ -21,7 +21,7 @@ func FavoriteAction(userid uint, videoid uint, actiontype string) (err error) {
 	return
 }
 
-func DoFavorite(userid, videoid uint) (err error) {
+func DoFavorite(userid, videoid uint) error {
 	// 查询是否存在已有数据
 	if CheckFavorite(userid, videoid) {
 		return common.FavoriteExist
@@ -31,77 +31,84 @@ func DoFavorite(userid, videoid uint) (err error) {
 		UserId:  userid,
 		VideoId: videoid,
 	}
-	if err = dao.SqlSession.Model(&entity.Favorite{}).Create(&favoriteInfo).Error; err != nil {
-		return err
-	}
-	// 对应的video数据 favorite_count+1
-	if err = dao.SqlSession.Model(&entity.Video{}).
-		Where("id = ?", videoid).
-		Update("favorite_count", gorm.Expr("favorite_count + 1")).
-		Error; err != nil {
-		return err
-	}
-	// 作者的user表的total_favorite增加
-	// 获取作者的id
-	var authorId uint
-	if authorId, err = GetVideoAuthor(videoid); err != nil {
-		return err
-	}
-	// +1
-	if err = dao.SqlSession.Model(&entity.User{}).
-		Where("id=?", authorId).
-		Update("total_favorited", gorm.Expr("total_favorited + 1")).
-		Error; err != nil {
-		return err
-	}
-	// userid对应的favorite_count +1
-	if err = dao.SqlSession.Model(&entity.User{}).
-		Where("id=?", userid).
-		Update("favorite_count", gorm.Expr("favorite_count + 1")).
-		Error; err != nil {
-		return err
-	}
-	return nil
+	err1 := dao.SqlSession.Transaction(func(db *gorm.DB) (err error) {
+		if err = db.Model(&entity.Favorite{}).Create(&favoriteInfo).Error; err != nil {
+			return err
+		}
+		// 对应的video数据 favorite_count+1
+		if err = db.Model(&entity.Video{}).
+			Where("id = ?", videoid).
+			Update("favorite_count", gorm.Expr("favorite_count + 1")).
+			Error; err != nil {
+			return err
+		}
+		// 作者的user表的total_favorite增加
+		// 获取作者的id
+		var authorId uint
+		if authorId, err = GetVideoAuthor(videoid); err != nil {
+			return err
+		}
+		// +1
+		if err = db.Model(&entity.User{}).
+			Where("id=?", authorId).
+			Update("total_favorited", gorm.Expr("total_favorited + 1")).
+			Error; err != nil {
+			return err
+		}
+		// userid对应的favorite_count +1
+		if err = db.Model(&entity.User{}).
+			Where("id=?", userid).
+			Update("favorite_count", gorm.Expr("favorite_count + 1")).
+			Error; err != nil {
+			return err
+		}
+		return nil
+	})
+	return err1
 }
 
-func UnFavorite(userid, videoid uint) (err error) {
+func UnFavorite(userid, videoid uint) error {
 	// 查询是否存在已有数据
 	if !CheckFavorite(userid, videoid) {
 		return common.FavoriteNoExist
 	}
 	// 删除
-	if err = dao.SqlSession.Model(&entity.Favorite{}).
-		Where("user_id = ? AND video_id = ?", userid, videoid).
-		Delete(&entity.Favorite{}).Error; err != nil {
-		return err
-	}
-	// 对应的video数据 favorite_count-1
-	if err = dao.SqlSession.Model(&entity.Video{}).
-		Where("id = ?", videoid).
-		Update("favorite_count", gorm.Expr("favorite_count - 1")).
-		Error; err != nil {
-		return err
-	}
-	// 作者的user表的total_favorite增加
-	// 获取作者的id
-	var authorId uint
-	if authorId, err = GetVideoAuthor(videoid); err != nil {
-		return err
-	}
-	if err = dao.SqlSession.Model(&entity.User{}).
-		Where("id=?", authorId).
-		Update("total_favorited", gorm.Expr("total_favorited - 1")).
-		Error; err != nil {
-		return err
-	}
-	// userid对应的favorite_count - 1
-	if err = dao.SqlSession.Model(&entity.User{}).
-		Where("id=?", userid).
-		Update("favorite_count", gorm.Expr("favorite_count - 1")).
-		Error; err != nil {
-		return err
-	}
-	return nil
+	err1 := dao.SqlSession.Transaction(func(db *gorm.DB) (err error) {
+		if err = db.Model(&entity.Favorite{}).
+			Where("user_id = ? AND video_id = ?", userid, videoid).
+			Delete(&entity.Favorite{}).Error; err != nil {
+			return err
+		}
+		// 对应的video数据 favorite_count-1
+		if err = db.Model(&entity.Video{}).
+			Where("id = ?", videoid).
+			Update("favorite_count", gorm.Expr("favorite_count - 1")).
+			Error; err != nil {
+			return err
+		}
+		// 作者的user表的total_favorite增加
+		// 获取作者的id
+		var authorId uint
+		if authorId, err = GetVideoAuthor(videoid); err != nil {
+			return err
+		}
+		if err = db.Model(&entity.User{}).
+			Where("id=?", authorId).
+			Update("total_favorited", gorm.Expr("total_favorited - 1")).
+			Error; err != nil {
+			return err
+		}
+		// userid对应的favorite_count - 1
+		if err = db.Model(&entity.User{}).
+			Where("id=?", userid).
+			Update("favorite_count", gorm.Expr("favorite_count - 1")).
+			Error; err != nil {
+			return err
+		}
+		return nil
+	})
+
+	return err1
 }
 
 func CheckFavorite(userid, videoid uint) bool {

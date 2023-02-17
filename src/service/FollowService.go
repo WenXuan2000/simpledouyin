@@ -117,9 +117,16 @@ func FollowerListGet(uid uint) ([]entity.User, error) {
 func FriendListGet(uid uint) ([]entity.User, error) {
 	var FollowerList []entity.User
 	FollowerList = make([]entity.User, 0)
+	// 首先取出互相关注的被关注者的id
+	var idlist []uint
+	if err := dao.SqlSession.Table("follow a").
+		Joins("left join follow b on a.follow_id =b.followed_id And b.follow_id =a.followed_id").
+		Where("a.follow_id=? AND a.deleted_at is null AND b.deleted_at is null", uid).
+		Pluck("a.followed_id", &idlist).Error; err != nil {
+		return FollowerList, err
+	}
 	if err := dao.SqlSession.Model(&entity.User{}).
-		Joins("left join "+entity.Follow{}.TableName()+" on "+entity.User{}.TableName()+".id = "+entity.Follow{}.TableName()+".follow_id").
-		Where(entity.Follow{}.TableName()+".followed_id=? AND "+entity.Follow{}.TableName()+".deleted_at is null", uid).
+		Where("id in (?)", idlist).
 		Scan(&FollowerList).Error; err != nil {
 		return FollowerList, err
 	}
